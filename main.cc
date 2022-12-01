@@ -3,9 +3,9 @@
 #include <omp.h>
 #include <queue>
 
-#include "graph.hpp"
-#include "search.hpp"
-#include "utils.hpp"
+#include "graph_searcher/graph.hpp"
+#include "graph_searcher/search.hpp"
+#include "graph_searcher/utils.hpp"
 
 using namespace graph_searcher;
 
@@ -23,19 +23,15 @@ int main(int argc, char **argv) {
   load_fvecs(query_path, query, nq, dim);
   load_fvecs(gt_path, gt, nq, gt_k);
 
-  auto do_iters = [&](int iters, auto &f, auto &&...args) {
-    for (int iter = 0; iter < iters; ++iter) {
-      std::cout << "iter: " << iter << std::endl;
-      f(args...);
-    }
-  };
-
-  auto run = [&](const auto &graph) {
+  auto run = [&](auto &&graph, auto &f, int num_threads = 1) {
     int64_t cnt = 0;
     auto st = std::chrono::high_resolution_clock::now();
     // #pragma omp parallel for num_threads(8)
+    nq = 100;
+#pragma omp parallel for num_threads(num_threads)
     for (int i = 0; i < nq; ++i) {
-      auto ret = greedy_search(graph, query + i * dim, k, ef);
+      auto ret =
+          f(std::forward<decltype(graph)>(graph), query + i * dim, k, ef);
       std::unordered_set<int> st(gt + i * gt_k, gt + i * gt_k + k);
       for (auto x : ret) {
         if (st.count(x)) {
@@ -49,11 +45,14 @@ int main(int argc, char **argv) {
     std::cout << "QPS: " << double(nq) / elapsed << std::endl;
   };
 
-  if (std::string(graph_type) == "diskann") {
-    DiskannGraph graph(graph_path);
-    do_iters(10, run, graph);
+  if (std::string(graph_type) == "vamana") {
+    VamanaGraph graph(graph_path);
+    run(graph, greedy_search<decltype(graph)>, 2);
   } else if (std::string(graph_type) == "nsg") {
     NSGGraph graph(graph_path, data_path);
-    do_iters(10, run, graph);
+    run(graph, greedy_search<decltype(graph)>);
+  } else if (std::string(graph_type) == "diskvamana") {
+    DiskVamanaGraph graph(graph_path);
+    run(graph, beam_search<decltype(graph)>);
   }
 }

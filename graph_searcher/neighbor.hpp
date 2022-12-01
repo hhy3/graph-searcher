@@ -1,6 +1,8 @@
 #pragma once
 
 #include <bits/stdc++.h>
+#include <functional>
+#include <queue>
 
 namespace graph_searcher {
 
@@ -27,48 +29,6 @@ struct Neighbor {
   inline bool operator<(const Neighbor &other) const {
     return distance < other.distance;
   }
-};
-
-class HeapNeighborSet {
-public:
-  HeapNeighborSet(size_t open_capacity, size_t closed_capacity)
-      : open_capacity_(open_capacity), closed_capacity_(closed_capacity) {}
-
-  void insert(const SimpleNeighbor &nbr) {
-    if (open_.size() < open_capacity_) {
-      open_.emplace(nbr);
-    } else if (nbr < *open_.rbegin()) {
-      open_.erase(std::prev(open_.end()));
-      open_.insert(nbr);
-    }
-  }
-
-  SimpleNeighbor pop() {
-    auto ret = *open_.begin();
-    if (closed_.size() < closed_capacity_) {
-      closed_.insert(ret);
-    } else if (ret < *closed_.rbegin()) {
-      closed_.erase(std::prev(closed_.end()));
-      closed_.insert(ret);
-    }
-    open_.erase(ret);
-    return ret;
-  }
-
-  bool has_next() { return !open_.empty(); }
-
-  std::vector<int> get_topk(int k) {
-    std::vector<int> ans(k);
-    int i = 0;
-    for (auto it = closed_.begin(); i < k; it++, i++) {
-      ans[i] = it->id;
-    }
-    return ans;
-  }
-
-private:
-  size_t open_capacity_, closed_capacity_;
-  std::set<SimpleNeighbor> open_, closed_;
 };
 
 class NeighborSet {
@@ -113,8 +73,10 @@ public:
   std::vector<int> get_topk(int k) {
     std::vector<int> ans(k);
     for (int i = 0; i < k; ++i) {
+      std::cout << data_[i].distance << ", ";
       ans[i] = data_[i].id;
     }
+    std::cout << "\n";
     return ans;
   }
 
