@@ -140,7 +140,8 @@ struct DiskVamanaGraph {
 
   char *get_buffer() {
     std::unique_lock<std::mutex> lk(mtx_);
-    char *p = page_buffer_[std::this_thread::get_id()];
+    auto id = std::this_thread::get_id();
+    char *&p = page_buffer_[id];
     lk.unlock();
     if (!p) {
       p = (char *)aligned_alloc(kPageSize, kPageSize * kPagesPerThread);
@@ -148,7 +149,9 @@ struct DiskVamanaGraph {
     return p;
   }
 
-  PQTable &pqtable() { return pqtable_; }
+  PQTable &pqtable() {
+    return pqtable_;
+  }
 
   float *data(char *buf, int i) { return (float *)get_node(buf, i); }
 

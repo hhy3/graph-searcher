@@ -51,6 +51,9 @@ public:
       io_uring_wait_cqe(&ctx_.ring(), &cqe);
       io_uring_cqe_seen(&ctx_.ring(), cqe);
     }
+    // for (const auto& req : reqs) {
+    //   pread(fd_, req.buf, req.len, req.offset);
+    // }
   }
 
 private:

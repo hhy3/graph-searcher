@@ -73,10 +73,8 @@ public:
   std::vector<int> get_topk(int k) {
     std::vector<int> ans(k);
     for (int i = 0; i < k; ++i) {
-      std::cout << data_[i].distance << ", ";
       ans[i] = data_[i].id;
     }
-    std::cout << "\n";
     return ans;
   }
 

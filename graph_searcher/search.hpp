@@ -40,28 +40,21 @@ std::vector<int> beam_search(GraphType &graph, const float *q, int k,
   NeighborSet retset(l_search);
   std::vector<std::pair<int, float>> full_retset;
   auto &pqtable = graph.pqtable();
-  pqtable.set_query(q);
-  retset.insert({ep, pqtable.distance_to(ep)});
+  auto dt = pqtable.get_dt(q);
+  retset.insert({ep, dt.distance_to(ep)});
   while (retset.has_next()) {
     auto [u, dist] = retset.pop();
     char *buf = graph.read({u})[0];
     int len = graph.degree(buf, u);
     int *edges = graph.edges(buf, u);
-    std::vector<int> es;
-    for (int i = 0; i < len; ++i) {
-      es.push_back(edges[i]);
-    }
     full_retset.emplace_back(u, l2sqr(q, graph.data(buf, u), graph.dim()));
-    for (auto v : es) {
-      // int v = edges[i];
+    for (int i = 0; i < len; ++i) {
+      int v = edges[i];
       if (visited[v]) {
         continue;
       }
       visited[v] = true;
-      char *buf = graph.read({v})[0];
-      float cur_dist = l2sqr(q, graph.data(buf, v), graph.dim());
-      float t_dist = pqtable.distance_to(v);
-      std::cout << cur_dist << " " << t_dist << std::endl;
+      float t_dist = dt.distance_to(v);
       retset.insert({v, t_dist});
     }
   }

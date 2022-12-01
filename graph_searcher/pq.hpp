@@ -8,6 +8,43 @@
 
 namespace graph_searcher {
 
+class DistanceTable {
+public:
+  DistanceTable(const float *q, int dim, int M, const float *pivots,
+                const uint8_t *codes)
+      : dim_(dim), M_(M), codes_(codes) {
+    table_ = (float *)malloc(M * kK * sizeof(float));
+    int ds = dim / M;
+    std::memset(table_, 0, M * kK * sizeof(float));
+    for (int chunk = 0; chunk < M; ++chunk) {
+      float *cur_table = table_ + chunk * kK;
+      for (int c = 0; c < kK; ++c) {
+        const float *cur_pivot = pivots + c * dim;
+        for (int i = chunk * ds; i < (chunk + 1) * ds; ++i) {
+          float diff = q[i] - cur_pivot[i];
+          cur_table[c] += diff * diff;
+        }
+      }
+    }
+  }
+
+  float distance_to(int i) {
+    float dist = 0.0;
+    const uint8_t *code = codes_ + i * M_;
+    for (int j = 0; j < M_; ++j) {
+      float *cur_table = table_ + j * kK;
+      dist += cur_table[code[j]];
+    }
+    return dist;
+  }
+
+private:
+  constexpr static size_t kK = 256;
+  int dim_, M_;
+  float *table_;
+  const uint8_t *codes_;
+};
+
 class PQTable {
 public:
   PQTable() = default;
@@ -32,39 +69,15 @@ public:
     reader.read((char *)centroid, dim_ * sizeof(float));
   }
 
-  void set_query(const float *q) {
-    if (!dist_table_) {
-      dist_table_ = (float *)malloc(M_ * kK * sizeof(float));
-    }
-    int ds = dim_ / M_;
-    std::memset(dist_table_, 0, M_ * kK * sizeof(float));
-    for (int chunk = 0; chunk < M_; ++chunk) {
-      float *cur_table = dist_table_ + chunk * kK;
-      for (int c = 0; c < kK; ++c) {
-        float *cur_pivot = pivots_ + c * dim_;
-        for (int i = chunk * ds; i < chunk * (ds + 1); ++i) {
-          float diff = q[i] - cur_pivot[i];
-          cur_table[c] += diff * diff;
-        }
-      }
-    }
+  DistanceTable get_dt(const float *q) const {
+    return DistanceTable(q, dim_, M_, pivots_, codes_);
   }
 
-  float distance_to(int i) {
-    float dist = 0.0;
-    uint8_t *code = codes_ + i * M_;
-    for (int j = 0; j < M_; ++j) {
-      float *cur_table = dist_table_ + j * kK;
-      dist += cur_table[code[j]];
-    }
-    return dist;
-  }
+  int size() const { return size_; }
 
-  int size() { return size_; }
+  int M() const { return M_; }
 
-  int M() { return M_; }
-
-  int dim() { return dim_; }
+  int dim() const { return dim_; }
 
 private:
   constexpr static size_t kPageSize = 4096, kK = 256;

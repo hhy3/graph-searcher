@@ -17,17 +17,17 @@ int main(int argc, char **argv) {
   const char *gt_path = argv[5];
   int k = std::stoi(argv[6]);
   int ef = std::stoi(argv[7]);
+  int num_threads = std::stoi(argv[8]);
   float *query;
   int *gt;
   int nq, dim, gt_k;
   load_fvecs(query_path, query, nq, dim);
   load_fvecs(gt_path, gt, nq, gt_k);
 
-  auto run = [&](auto &&graph, auto &f, int num_threads = 1) {
+  auto run = [&](auto &&graph, auto &f) {
     int64_t cnt = 0;
     auto st = std::chrono::high_resolution_clock::now();
-    // #pragma omp parallel for num_threads(8)
-    nq = 100;
+    nq = 200;
 #pragma omp parallel for num_threads(num_threads)
     for (int i = 0; i < nq; ++i) {
       auto ret =
@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 
   if (std::string(graph_type) == "vamana") {
     VamanaGraph graph(graph_path);
-    run(graph, greedy_search<decltype(graph)>, 2);
+    run(graph, greedy_search<decltype(graph)>);
   } else if (std::string(graph_type) == "nsg") {
     NSGGraph graph(graph_path, data_path);
     run(graph, greedy_search<decltype(graph)>);
