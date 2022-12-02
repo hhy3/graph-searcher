@@ -1,6 +1,6 @@
 #pragma once
 
-#include <bits/stdc++.h>
+#include <algorithm>
 
 #include "neighbor.hpp"
 #include "utils.hpp"
@@ -34,38 +34,44 @@ std::vector<int> greedy_search(GraphType &graph, const float *q, int k,
 
 template <typename GraphType>
 std::vector<int> beam_search(GraphType &graph, const float *q, int k,
-                             int l_search) {
+                             int l_search, int beamwidth = 1) {
   std::vector<bool> visited(graph.size());
   int ep = graph.ep();
   NeighborSet retset(l_search);
   std::vector<std::pair<int, float>> full_retset;
-  auto &pqtable = graph.pqtable();
+  const auto &pqtable = graph.pqtable();
   auto dt = pqtable.get_dt(q);
   retset.insert({ep, dt.distance_to(ep)});
   while (retset.has_next()) {
-    auto [u, dist] = retset.pop();
-    char *buf = graph.read({u})[0];
-    int len = graph.degree(buf, u);
-    int *edges = graph.edges(buf, u);
-    full_retset.emplace_back(u, l2sqr(q, graph.data(buf, u), graph.dim()));
-    for (int i = 0; i < len; ++i) {
-      int v = edges[i];
-      if (visited[v]) {
-        continue;
+    std::vector<int> ids;
+    while (ids.size() < beamwidth && retset.has_next()) {
+      auto [u, dist] = retset.pop();
+      ids.push_back(u);
+    }
+    std::vector<char *> bufs = graph.read(ids);
+    for (int i = 0; i < ids.size(); ++i) {
+      char *buf = bufs[i];
+      int u = ids[i];
+      int len = graph.degree(buf, u);
+      int *edges = graph.edges(buf, u);
+      full_retset.emplace_back(u, l2sqr(q, graph.data(buf, u), graph.dim()));
+      for (int i = 0; i < len; ++i) {
+        int v = edges[i];
+        if (visited[v]) {
+          continue;
+        }
+        visited[v] = true;
+        float t_dist = dt.distance_to(v);
+        retset.insert({v, t_dist});
       }
-      visited[v] = true;
-      float t_dist = dt.distance_to(v);
-      retset.insert({v, t_dist});
     }
   }
   std::sort(full_retset.begin(), full_retset.end(),
             [](auto &lhs, auto &rhs) { return lhs.second < rhs.second; });
   std::vector<int> ans(k);
   for (int i = 0; i < k; ++i) {
-    // std::cout << full_retset[i].second << ", ";
     ans[i] = full_retset[i].first;
   }
-  // std::cout << "\n";
   return ans;
 }
 

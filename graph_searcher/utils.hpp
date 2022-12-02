@@ -1,7 +1,8 @@
 #pragma once
 
-#include <bits/stdc++.h>
 #include <immintrin.h>
+#include <fstream>
+#include <iostream>
 
 namespace graph_searcher {
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <bits/stdc++.h>
 #include <cstdlib>
 #include <mutex>
 #include <thread>
@@ -149,9 +148,7 @@ struct DiskVamanaGraph {
     return p;
   }
 
-  PQTable &pqtable() {
-    return pqtable_;
-  }
+  PQTable &pqtable() { return pqtable_; }
 
   float *data(char *buf, int i) { return (float *)get_node(buf, i); }
 
