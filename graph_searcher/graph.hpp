@@ -4,7 +4,7 @@
 #include <mutex>
 #include <thread>
 
-#include "file_reader.hpp"
+#include "file_system.hpp"
 #include "pq.hpp"
 
 namespace graph_searcher {
@@ -106,7 +106,7 @@ private:
 
 struct DiskVamanaGraph {
   DiskVamanaGraph(const std::string &index_prefix)
-      : index_prefix_(index_prefix), reader_(disk_index_path(index_prefix_)) {
+      : index_prefix_(index_prefix), file_(disk_index_path(index_prefix_)) {
     std::ifstream meta_reader(disk_index_path(index_prefix));
     constexpr size_t kMetaLen = 48;
     char buf[kMetaLen];
@@ -133,7 +133,7 @@ struct DiskVamanaGraph {
                             buf + i * kPageSize);
       bufs[i] = reqs[i].buf;
     }
-    reader_.read(reqs);
+    file_.read(reqs);
     return bufs;
   }
 
@@ -171,7 +171,7 @@ private:
   constexpr static size_t kPagesPerThread = 128;
   std::string index_prefix_;
   std::unordered_map<std::thread::id, char *> page_buffer_;
-  FileReader reader_;
+  FileSystem file_;
   std::mutex mtx_;
 
   PQTable pqtable_;

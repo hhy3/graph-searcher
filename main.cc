@@ -13,14 +13,28 @@ int main(int argc, char **argv) {
   const char *data_path = argv[3];
   const char *query_path = argv[4];
   const char *gt_path = argv[5];
-  int k = std::stoi(argv[6]);
-  int ef = std::stoi(argv[7]);
-  int num_threads = std::stoi(argv[8]);
+  int k = 10;
+  if (argc >= 7) {
+    k = std::stoi(argv[6]);
+  }
+  int ef = 32;
+  if (argc >= 8) {
+    ef = std::stoi(argv[7]);
+  }
+  int num_threads = 1;
+  if (argc >= 9) {
+    num_threads = std::stoi(argv[8]);
+  }
+  int beamwidth = 1;
+  if (argc >= 10) {
+    beamwidth = std::stoi(argv[9]);
+  }
   float *query;
   int *gt;
   int nq, dim, gt_k;
   load_fvecs(query_path, query, nq, dim);
   load_fvecs(gt_path, gt, nq, gt_k);
+  nq = 1000;
 
   auto do_iter = [&](int iters, auto &&f, auto &&...args) {
     for (int iter = 0; iter < iters; ++iter) {
@@ -57,6 +71,6 @@ int main(int argc, char **argv) {
     do_iter(10, run, graph, greedy_search<decltype(graph)>, ef);
   } else if (std::string(graph_type) == "diskvamana") {
     DiskVamanaGraph graph(graph_path);
-    do_iter(10, run, graph, beam_search<decltype(graph)>, ef, 4);
+    do_iter(10, run, graph, beam_search<decltype(graph)>, ef, beamwidth);
   }
 }

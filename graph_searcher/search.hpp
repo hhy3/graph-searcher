@@ -20,7 +20,6 @@ std::vector<int> greedy_search(GraphType &graph, const float *q, int k,
     int *edges = graph.edges(u);
     for (int i = 0; i < len; ++i) {
       int v = edges[i];
-
       if (visited[v]) {
         continue;
       }
