@@ -13,18 +13,23 @@ std::vector<int> greedy_search(GraphType &graph, const float *q, int k,
   std::vector<bool> visited(graph.size());
   int ep = graph.ep();
   NeighborSet retset(l_search);
-  retset.insert({ep, l2sqr(q, graph.data(ep), graph.dim())});
+  retset.insert({ep, l2sqrbf16(q, graph.data(ep), graph.dim())});
+  // retset.insert({ep, graph.dist_to(q, ep)});
   while (retset.has_next()) {
     auto [u, dist] = retset.pop();
     int len = graph.degree(u);
     int *edges = graph.edges(u);
+    for (int i = 0; i < len; ++i) {
+      _mm_prefetch(graph.data(edges[i]), _MM_HINT_T0);
+    }
     for (int i = 0; i < len; ++i) {
       int v = edges[i];
       if (visited[v]) {
         continue;
       }
       visited[v] = true;
-      float cur_dist = l2sqr(q, graph.data(v), graph.dim());
+      // float cur_dist = graph.dist_to(q, v);
+      float cur_dist = l2sqrbf16(q, graph.data(v), graph.dim());
       retset.insert({v, cur_dist});
     }
   }

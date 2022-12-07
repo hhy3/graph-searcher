@@ -106,7 +106,7 @@ public:
     io_cnt_ += reqs.size();
     auto &reader = reader_map_[std::this_thread::get_id()];
     if (reader == nullptr) {
-      reader = std::make_unique<IOUringReader>();
+      reader = std::make_unique<AIOReader>();
     }
     lk.unlock();
     reader->read(reqs, fd_);

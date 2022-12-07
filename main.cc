@@ -34,7 +34,6 @@ int main(int argc, char **argv) {
   int nq, dim, gt_k;
   load_fvecs(query_path, query, nq, dim);
   load_fvecs(gt_path, gt, nq, gt_k);
-  nq = 1000;
 
   auto do_iter = [&](int iters, auto &&f, auto &&...args) {
     for (int iter = 0; iter < iters; ++iter) {
